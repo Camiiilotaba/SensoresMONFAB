@@ -1,0 +1,10 @@
+{"nombreElemento":"","numeroSerie":"","estado":null,"prioridad":"activo"}
+{"nombreElemento":"","numeroSerie":"","estado":"baja","prioridad":"activo"}
+{"nombreElemento":"aaa","descripcion":"aaa","numeroSerie":"aaa","estado":"media","prioridad":"activo"}
+{"nombreElemento":"","descripcion":"","numeroSerie":"","estado":"baja","prioridad":null}
+{"nombreElemento":"juan jose","descripcion":"pepepepep","numeroSerie":"01jdjas23","estado":"baja","prioridad":null}
+{"nombreElemento":"juan jose","descripcion":"pepepepep","numeroSerie":"01jdjas23","estado":"baja","prioridad":"activo"}
+{"nombreElemento":null,"descripcion":"","numeroSerie":"","estado":"baja","prioridad":null}
+{"nombreElemento":null,"descripcion":"","numeroSerie":"","estado":"baja","prioridad":null}
+{"nombreElemento":null,"descripcion":"","numeroSerie":"","estado":"baja","prioridad":null}
+{"nombreElemento":"aaa","descripcion":"aaa","numeroSerie":"aa","estado":"media","prioridad":null}
