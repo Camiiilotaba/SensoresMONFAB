@@ -7,9 +7,9 @@ const elementos = [
 
 window.onload = function() {
     const tbody = document.getElementById('tabla-sensores').querySelector('tbody');
-    elementos.forEach((elemento, index) => {
+    elementos.forEach((elemento) => {
         const row = tbody.insertRow();
-        //Uso de backticks para intercalar variables en el HTML
+        //Uso de backticks para intercalar variables en strings
         row.innerHTML = `
             <td><button onclick="eliminarFila(this)">X</button></td>
             <td>${elemento.nombre}</td>
