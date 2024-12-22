@@ -5,20 +5,21 @@
     <meta charset="UTF-8">
     <title>Formulario de Sensor</title>
     <script src="js/nav.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="js/formulario.js" defer></script>
     <link rel="stylesheet" href="style.css">
-    
 </head>
 
 <body>
     <h1>Formulario de Sensor</h1>
-    <form action="ws/createElement.php" method="post">
+    <form id="formulario-sensor">
         <label for="nombre">Nombre del elemento:</label>
         <input type="text" id="nombre" name="nombre"><br><br>
 
         <label for="descripcion">Descripción del elemento:</label>
         <input type="text" id="descripcion" name="descripcion"><br><br>
 
-        <label for="numeroSerie">Número de serie :</label>
+        <label for="numeroSerie">Número de serie:</label>
         <input type="text" id="numeroSerie" name="numeroSerie"><br><br>
 
         <label for="estado">Estado:</label>
@@ -31,8 +32,6 @@
 
         <input type="submit" value="Enviar">
     </form>
-    
-
 </body>
 
 </html>

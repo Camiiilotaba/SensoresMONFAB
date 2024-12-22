@@ -3,18 +3,20 @@ require_once __DIR__ . "/models/Element.php";
 require_once __DIR__ . "/models/Conexion.php";
 require_once __DIR__ . "/models/RespuestaJson.php";
 
+// Leer los datos JSON enviados por el cliente
+$data = json_decode(file_get_contents("php://input"), true);
 
-$nombreElemento = isset($_POST["nombre"]) ? $_POST["nombre"] : '';
-$descripcion = isset($_POST["descripcion"]) ? $_POST["descripcion"] : '';
-$numeroSerie = isset($_POST["numeroSerie"]) ? $_POST["numeroSerie"] : '';
-$estado = isset($_POST["estado"]) ? $_POST["estado"] : null;
-$prioridad = isset($_POST["prioridad"]) ? $_POST["prioridad"] : 'baja';
+// Validar los datos
+$nombreElemento = isset($data["nombre"]) ? $data["nombre"] : '';
+$descripcion = isset($data["descripcion"]) ? $data["descripcion"] : '';
+$numeroSerie = isset($data["numeroSerie"]) ? $data["numeroSerie"] : '';
+$estado = isset($data["estado"]) ? $data["estado"] : null;
+$prioridad = isset($data["prioridad"]) ? $data["prioridad"] : 'baja';
 
-$element = new Element($nombreElemento, $descripcion, $numeroSerie, $estado, $prioridad);
+$element = new Element($nombreElemento, $descripcion, $numeroSerie, $prioridad, $estado);
 
 $conexion = new Conexion();
 $conex = $conexion->getConnection();
-
 
 try {
     $sql = "INSERT INTO elementos (nombre, descripcion, nserie, estado, prioridad) 
@@ -28,13 +30,12 @@ try {
     $statement->bindValue(':estado', $element->getEstado());
     $statement->bindValue(':prioridad', $element->getPrioridad());
 
-
     $statement->execute();
 
     $id = $conex->lastInsertId();
 
-
-    $data = [
+    // Preparar la respuesta con los datos insertados
+    $response = [
         "id" => $id,
         "nombreElemento" => $element->getNombreElemento(),
         "descripcion" => $element->getDescripcion(),
@@ -43,13 +44,9 @@ try {
         "prioridad" => $element->getPrioridad()
     ];
 
-
-    RespuestaJson::sendResponse(true, "Elemento creado correctamente", $data);
+    RespuestaJson::sendResponse(true, "Elemento creado correctamente", $response);
 } catch (PDOException $e) {
-
     RespuestaJson::sendResponse(false, "Error al crear el elemento: " . $e->getMessage());
 }
 
-
 $conex = null;
-

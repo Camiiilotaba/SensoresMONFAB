@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const RUTA_ARCHIVO = "nav.html";
+  const scriptPath = document.currentScript.src; // Obtiene la URL completa de nav.js
+  const scriptDir = scriptPath.substring(0, scriptPath.lastIndexOf('/')); // Obtiene el directorio base
+  
+  // Construir la ruta absoluta 
+  const RUTA_ARCHIVO = `${scriptDir}/../nav.html`; 
 
   // Añade el nav bar
   const navbar = document.createElement("div");
@@ -16,11 +20,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     }
 
-    // Añade el navbar al dom
+    // Añade el navbar al DOM
     const html = await response.text();
     navbar.innerHTML = html;
 
-    // Se llama a la funcion para resaltar la ruta actual
+    // Resalta la ruta actual
     mostrarRutaActual();
   } catch (error) {
     console.error("Error al cargar la barra de navegación:", error);
@@ -29,21 +33,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Función para resaltar la ruta actual en el navbar
 function mostrarRutaActual() {
-  // Obtiene el nombre del archivo de la ruta actual
-  const rutaActual = window.location.pathname.split("/").pop();
+  const rutaActual = window.location.pathname.split("/").pop(); // Nombre del archivo actual
+  const enlaces = document.querySelectorAll("#navbar-JS a"); // Enlaces dentro del navbar
 
-  // Selecciona todos los enlaces dentro del navbar con ese id
-  const enlaces = document.querySelectorAll("#navbar-JS a");
-
-  // con el for recorre los enlaces del navbar hasta ver uno que sea igual y le añade la clase activo
   for (let enlace of enlaces) {
     if (enlace.getAttribute("href") === rutaActual) {
-      enlace.classList.add("activo");
+      enlace.classList.add("activo"); // Añadir clase activo si coincide la ruta
     }
   }
 }
-
-
-
-
-

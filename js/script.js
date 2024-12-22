@@ -1,101 +1,149 @@
-const elementos = [
-    { nombre: 'Sensor de temperatura', descripcion: 'Mide la temperatura ambiente', numeroSerie: '001', estado: 'Activo', prioridad: 'Alta' },
-    { nombre: 'Sensor de humedad', descripcion: 'Mide la humedad relativa', numeroSerie: '002', estado: 'Inactivo', prioridad: 'Media' },
-];
+let elementos = [];
 
 window.onload = () => {
-    cargarTabla();  
+    cargarTabla();
 };
-
 
 function cargarTabla() {
     const tbody = document.getElementById('tabla-sensores').querySelector('tbody');
-    tbody.innerHTML = '';  // Limpiar cualquier contenido anterior
-    elementos.forEach((elemento, index) => {
-        const row = tbody.insertRow();
-        row.innerHTML = `
-            <td>
-                <button onclick="eliminarFila(this)">X</button>
-                <button onclick="editarTabla(${index})">EDITAR</button>
-            </td>
-            <td>${elemento.nombre}</td>
-            <td>${elemento.descripcion}</td>
-            <td>${elemento.numeroSerie}</td>
-            <td>${elemento.estado}</td>
-            <td>${elemento.prioridad}</td>
-        `;
+    tbody.innerHTML = ''; // Limpiar cualquier contenido anterior
+
+    fetch('./ws/getElement.php')
+        .then(response => response.json())
+        .then(responseData => {
+            if (responseData.success) {
+                elementos = responseData.data;  // Guardamos los datos obtenidos en el array
+
+                elementos.forEach((elemento) => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>
+                            <button onclick="eliminarFila(this, ${elemento.id})">X</button> <!-- Botón de eliminar -->
+                            <button onclick="editarTabla(${elemento.id})">EDITAR</button> <!-- Botón de editar -->
+                        </td>
+                        <td>${elemento.nombre}</td>
+                        <td>${elemento.descripcion}</td>
+                        <td>${elemento.nserie}</td>
+                        <td>${elemento.estado}</td>
+                        <td>${elemento.prioridad}</td>
+                    `;
+                });
+            } else {
+                Swal.fire(
+                    'Error!',
+                    responseData.message || 'Hubo un problema al cargar los elementos',
+                    'error'
+                );
+            }
+        })
+        .catch(error => {
+            Swal.fire(
+                'Error!',
+                'Hubo un problema al cargar los elementos',
+                'error'
+            );
+            console.error('Error al cargar los elementos:', error);
+        });
+}
+
+// Eliminar un elemento
+function eliminarFila(button, idElemento) {
+    Swal.fire({
+        title: '¿Estás seguro de que quieres eliminar este elemento?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`./ws/deleteElement.php?id=${idElemento}`, {
+                method: 'GET'  
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                   
+                    Swal.fire(
+                        'Eliminado!',
+                        'El elemento ha sido eliminado correctamente',
+                        'success'
+                    );
+                    button.closest('tr').remove(); 
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        data.message || 'Hubo un problema al eliminar el elemento de la base de datos',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                Swal.fire(
+                    'Error!',
+                    'Hubo un problema al conectar con el servidor',
+                    'error'
+                );
+                console.error('Error al eliminar el elemento:', error);
+            });
+        }
     });
 }
 
 
-function eliminarFila(button) {
-    if (confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
-    // Obtener la fila mas cercana al botón pulsado, en este caso, la fila que contiene el botón
-    const row = button.closest('tr');
-    row.remove();
-    }
-}
 
+// Editar un elemento
+function editarTabla(idElemento) {
+    // Buscar el elemento a editar por su id desde el array de 'elementos'
+    const elemento = elementos.find(e => e.id === idElemento);
 
+    if (elemento) {
+        const formContainer = document.createElement('div');
+        formContainer.id = 'formulario-edicion';
+        
+        formContainer.innerHTML = `
+            <form id="form-editar">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" value="${elemento.nombre}" required />
+                <br>
+                <label for="descripcion">Descripción:</label>
+                <input type="text" id="descripcion" value="${elemento.descripcion}" required />
+                <br>
+                <label for="numeroSerie">Número de Serie:</label>
+                <input type="text" id="numeroSerie" value="${elemento.nserie}" required />
+                <br>
+                <label for="estado">Estado:</label>
+                <input type="checkbox" id="estado" ${elemento.estado === 'Activo' ? 'checked' : ''} />
+                <br>
+                <label>Prioridad:</label>
+                <input type="radio" name="prioridad" value="Alta" ${elemento.prioridad === 'Alta' ? 'checked' : ''}> Alta
+                <input type="radio" name="prioridad" value="Media" ${elemento.prioridad === 'Media' ? 'checked' : ''}> Media
+                <input type="radio" name="prioridad" value="Baja" ${elemento.prioridad === 'Baja' ? 'checked' : ''}> Baja
+                <br>
+            </form>
+        `;
 
+        cargarBotones(formContainer, idElemento);
 
-// Evento para filtrar la tabla al escribir en el input
-function filtrarTabla() {
-    const input = document.getElementById('filtro');
-    const filter = input.value.toLowerCase();
-    const tbody = document.getElementById('tabla-sensores').querySelector('tbody');
-    const rows = tbody.getElementsByTagName('tr');
-
-    if (filter.length < 3) {
-        for (let row of rows) {
-            row.style.display = ''; // Mostrar todas las filas
-        }
-        return;
-    }
-
-    for (let row of rows) {
-        const nombre = row.cells[1].textContent.toLowerCase();
-        const descripcion = row.cells[2].textContent.toLowerCase();
-        if (nombre.includes(filter) || descripcion.includes(filter)) {
-            row.style.display = ''; // Mostrar fila si hay coincidencia
+        // Asegúrate de que el contenedor de formulario exista y agregar el formulario
+        const formularioContainer = document.getElementById('formulario-container');
+        if (formularioContainer) {
+            formularioContainer.innerHTML = '';  // Limpiar el contenedor antes de agregar el formulario
+            formularioContainer.appendChild(formContainer);
         } else {
-            row.style.display = 'none'; // Ocultar fila si no hay coincidencia
+            console.error("No se encontró el contenedor 'formulario-container' en el HTML.");
         }
+    } else {
+        console.error('Elemento no encontrado para editar');
     }
 }
 
-
-function editarTabla(index) {
-    fetch('../formulario.html')
-        .then(response => response.text())
-        .then(html => {
-            const formContainer = document.createElement('div');
-            formContainer.id = 'formulario-edicion';
-            formContainer.innerHTML = html;
-
-            // Carga los valores del formulario ya existente, y los prerellena
-            const elemento = elementos[index];
-            formContainer.querySelector('#nombre').value = elemento.nombre;
-            formContainer.querySelector('#descripcion').value = elemento.descripcion;
-            formContainer.querySelector('#numeroSerie').value = elemento.numeroSerie;
-            formContainer.querySelector('#estado').checked = elemento.estado === 'Activo';
-            formContainer.querySelector(`#${elemento.prioridad.toLowerCase()}`).checked = true;
-
-            // Elimina el boton de enviar y agrega los botones de guardar y cancelar
-            formContainer.querySelector('input[type="submit"]').remove();
-            cargarBotones(formContainer, index);
-
-            document.getElementById('formulario-container').innerHTML = ''; // vacia el contenedor
-            document.getElementById('formulario-container').appendChild(formContainer);
-        })
-        .catch(error => console.error('Error al cargar el formulario:', error));
-}
-
-
-function cargarBotones(formContainer, index) {
+// Función para agregar los botones de guardar y cancelar
+function cargarBotones(formContainer, idElemento) {
     const guardarBoton = document.createElement('button');
     guardarBoton.textContent = 'Guardar';
-    guardarBoton.onclick = () => guardarEdicion(index, formContainer);
+    guardarBoton.type = 'button';  
+    guardarBoton.onclick = (event) => guardarEdicion(idElemento, formContainer, event); 
     formContainer.querySelector('form').appendChild(guardarBoton);
 
     const cancelarBoton = document.createElement('button');
@@ -104,38 +152,84 @@ function cargarBotones(formContainer, index) {
     formContainer.querySelector('form').appendChild(cancelarBoton);
 }
 
+function guardarEdicion(idElemento, formContainer, event) {
+    event.preventDefault();  
 
-function guardarEdicion(index, formContainer) {
+    // Obtener los valores del formulario
     const nombre = formContainer.querySelector('#nombre').value;
     const descripcion = formContainer.querySelector('#descripcion').value;
     const numeroSerie = formContainer.querySelector('#numeroSerie').value;
     const estado = formContainer.querySelector('#estado').checked ? 'Activo' : 'Inactivo';
-    const prioridad = formContainer.querySelector('input[name="prioridad"]:checked').value;
+    const prioridad = formContainer.querySelector('input[name="prioridad"]:checked')?.value;  // Asegurarse de que haya una prioridad seleccionada
 
-/* 
-    if (!nombre || !descripcion || !numeroSerie) {
-        alert('Todos los campos son obligatorios');
+    // Validación previa para asegurarse de que todos los campos estén completos
+    if (!nombre || !descripcion || !numeroSerie || !prioridad) {
+        Swal.fire(
+            'Error!',
+            'Por favor, rellene todos los campos antes de guardar',
+            'error'
+        );
         return;
     }
-    
-     Iba a añadir estas validaciones, el problema esque al saltar el error por no tener los formularios rellenados saltaba un error 405 y yo lo que queria aqui es que
-     al saltar el alert pudiera corregir el error. Pero no que me saltara a una pagina de erro 405
 
-*/
+    Swal.fire({
+        title: '¿Estás seguro de que quieres guardar los cambios?',
+        text: "Esta acción actualizará los datos del elemento",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const queryParams = new URLSearchParams({
+                id: idElemento,
+                nombre,
+                descripcion,
+                numeroSerie,
+                estado,
+                prioridad
+            }).toString(); // Convierte los datos en una cadena de consulta
 
-    // Actualiza la lista
-    elementos[index] = { nombre, descripcion, numeroSerie, estado, prioridad };
-    // Recarga la tabla 
-    cargarTabla();
-    // Cierra el form
-    cancelarEdicion();
+            fetch(`./ws/modifyElements.php?${queryParams}`, {
+                method: 'GET',  
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        '¡Éxito!',
+                        'El elemento ha sido modificado correctamente',
+                        'success'
+                    );
+                    cargarTabla();  
+                    cancelarEdicion();  
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        'Hubo un problema al guardar los cambios',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                Swal.fire(
+                    'Error!',
+                    'Hubo un problema al conectar con el servidor',
+                    'error'
+                );
+                console.error('Error al modificar el elemento:', error);
+            });
+        } else {
+            cancelarEdicion();  
+        }
+    });
 }
 
 
+// Cancelar la edición
 function cancelarEdicion() {
     const form = document.getElementById('formulario-edicion');
     if (form) {
         form.remove();
     }
 }
-
